@@ -1,41 +1,74 @@
-import React, { Component } from "react";
-// const log = (...args) => console.log.apply(null, ["GoogleMap -->", ...args]);
+import { useRef, useEffect } from "react";
+// import { useOncePostMount } from "../hooks/useOnce";
 const log = (...args: any[]) => console.log("GoogleMap -->", ...args);
 
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
 interface Props {
-    lat: number;
-    lng: number;
-    zoom: number;
+  latlng: LatLng;
+  zoom: number;
 }
 
-export class GoogleMap extends Component<Props> {
+export function GoogleMap({ latlng, zoom }: Props) {
+  const mapDiv = useRef<HTMLDivElement | null>(null);
+  const theMap = useRef<google.maps.Map | null>(null);
 
-  mapRef = React.createRef<HTMLDivElement>();
-  theMap: google.maps.Map | null = null;
+  useEffect(() => {
+    log("lat/lng update --->");
+    const { lat, lng } = latlng;
+    if (theMap.current) {
+      theMap.current.setCenter({ lat, lng });
+    }
+  }, [latlng]);
 
-  shouldComponentUpdate(nextProps: Props) {
-    log("shouldComponentUpdate >>>>");
-    // log("this.props:", this.props);
-    // log("this.state:", this.state);
-    // log("nextState:", nextState);
-    // log("nextProps:", nextProps);
-    // log("<<<< shouldComponentUpdate");
-    const map = this.theMap as google.maps.Map;
-    map.setCenter({ lat: nextProps.lat, lng: nextProps.lng });
-    map.setZoom(nextProps.zoom);
-    return false;
-  }
+  useEffect(() => {
+    log("zoom update --->");
+    if (theMap.current) {
+      theMap.current.setZoom(zoom);
+    }
+  }, [zoom]);
 
-  componentDidMount() {
-    // log(this.mapRef);
-    this.theMap = new google.maps.Map(this.mapRef.current as HTMLDivElement, {
-      center: { lat: this.props.lat, lng: this.props.lng },
-      zoom: 8
+  // step 1
+  //------------
+  useEffect(() => {
+    const { lat, lng } = latlng;
+    theMap.current = new google.maps.Map(mapDiv.current as HTMLDivElement, {
+      center: { lat, lng },
+      zoom,
     });
-  }
+  }, []);
 
-  render() {
-    return <div ref={this.mapRef} className="map-box" />;
-  }
+  // step 2
+  //------------
+  // const loadDataOnlyOnce = useRef(() => {
+  //   console.log("loadDataOnlyOnce");
+  //   const { lat, lng } = latlng;
+  //   theMap.current = new google.maps.Map(mapDiv.current as HTMLDivElement, {
+  //     center: { lat, lng },
+  //     zoom
+  //   });
+  // });
 
+  // useEffect(() => {
+  //   loadDataOnlyOnce.current();
+  // }, []);
+
+  // step 3
+  //------------
+
+  // useOncePostMount(() => {
+  //   const { lat, lng } = latlng;
+  //   theMap.current = new google.maps.Map(mapDiv.current as HTMLDivElement, {
+  //     center: { lat, lng },
+  //     zoom
+  //   });
+  // });
+
+  return <div ref={mapDiv} className="map-box" />;
 }
+
+
+// Alternatively, you can simply disable the eslint rule:
+// eslint-disable-next-line react-hooks/exhaustive-deps
